@@ -7,12 +7,17 @@ use super::{
 };
 use alloc::sync::Arc;
 use core::ptr::{null, null_mut};
-use hashbrown::HashMap;
-use objc2_core_foundation::{CFDictionary, CFRange, CFRetained, CFString};
-use objc2_core_text::{CTFont, CTFontDescriptor, CTFontUIFontType};
+use hashbrown::{HashMap, HashSet};
+use objc2_core_foundation::{
+    CFArray, CFDictionary, CFRange, CFRetained, CFString, CFType, CFURL, CFURLPathStyle,
+};
+use objc2_core_text::{
+    CTFont, CTFontCollection, CTFontDescriptor, CTFontUIFontType, kCTFontURLAttribute,
+};
 use objc2_foundation::{
     NSSearchPathDirectory, NSSearchPathDomainMask, NSSearchPathForDirectoriesInDomains,
 };
+use std::path::PathBuf;
 
 const DEFAULT_GENERIC_FAMILIES: &[(GenericFamily, &[&str])] = &[
     (GenericFamily::Serif, &["Times", "Times New Roman"]),
@@ -33,14 +38,10 @@ pub(crate) struct SystemFonts {
 
 impl SystemFonts {
     pub(crate) fn new() -> Self {
-        let paths = NSSearchPathForDirectoriesInDomains(
-            NSSearchPathDirectory::LibraryDirectory,
-            NSSearchPathDomainMask::AllDomainsMask,
-            true,
-        )
-        .into_iter()
-        .map(|p| format!("{p}/Fonts/"));
-        let scanned = scan::ScannedCollection::from_paths(paths, 8);
+        // 优先使用 CoreText 全量枚举，确保包含 AssetsV2 的系统 UI 字体（如 PingFang/SF）。
+        let scanned = scan_coretext_available_fonts()
+            .or_else(scan_fallback_files)
+            .unwrap_or_else(scan::ScannedCollection::default);
         let name_map = scanned.family_names;
         let mut generic_families = GenericFamilyMap::default();
         for (family, names) in DEFAULT_GENERIC_FAMILIES {
@@ -70,6 +71,62 @@ impl SystemFonts {
         let family_name = unsafe { font.family_name() };
         self.name_map.get(&family_name.to_string()).map(|n| n.id())
     }
+}
+
+/// 通过 CoreText 可用字体集合枚举系统字体，提取文件路径后复用现有扫描流程。
+fn scan_coretext_available_fonts() -> Option<scan::ScannedCollection> {
+    // SAFETY: 调用 CoreText C API，若失败返回 None 走兜底。
+    let collection = unsafe { CTFontCollection::from_available_fonts(None) };
+    let descriptors = unsafe { collection.matching_font_descriptors()? };
+    let descriptors: CFRetained<CFArray<CTFontDescriptor>> =
+        unsafe { CFRetained::cast_unchecked(descriptors) };
+
+    // 收集唯一路径，避免重复扫描。
+    let mut paths: HashSet<PathBuf> = HashSet::new();
+    for idx in 0..descriptors.len() {
+        let Some(desc) = descriptors.get(idx) else {
+            continue;
+        };
+        let Some(url_cf): Option<CFRetained<CFType>> =
+            (unsafe { desc.attribute(&kCTFontURLAttribute) })
+        else {
+            continue;
+        };
+        // attribute 返回 CFType；尝试向 CFURL 下转型。
+        let Ok(url_cf): Result<CFRetained<CFURL>, _> = url_cf.downcast::<CFURL>() else {
+            continue;
+        };
+        // 将 CFURL 转为 POSIX 路径字符串。
+        let Some(path_cf): Option<CFRetained<CFString>> =
+            url_cf.file_system_path(CFURLPathStyle::CFURLPOSIXPathStyle)
+        else {
+            continue;
+        };
+        let path = PathBuf::from(path_cf.to_string());
+        if path.exists() {
+            paths.insert(path);
+        }
+    }
+
+    if paths.is_empty() {
+        return None;
+    }
+
+    // 复用原有文件扫描逻辑（含 name alias 等处理）。
+    let scanned = scan::ScannedCollection::from_paths(paths.iter(), 12);
+    Some(scanned)
+}
+
+/// 原有 Library/Fonts 扫描兜底，防止 CoreText 失败导致列表为空。
+fn scan_fallback_files() -> Option<scan::ScannedCollection> {
+    let paths = NSSearchPathForDirectoriesInDomains(
+        NSSearchPathDirectory::LibraryDirectory,
+        NSSearchPathDomainMask::AllDomainsMask,
+        true,
+    )
+    .into_iter()
+    .map(|p| format!("{p}/Fonts/"));
+    Some(scan::ScannedCollection::from_paths(paths, 8))
 }
 
 fn create_base_font(prefer_ui_font: bool) -> CFRetained<CTFont> {
