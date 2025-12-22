@@ -4,16 +4,16 @@ version = "0.7.0" # Keep in sync with workspace dependency specification
 description = "Font enumeration and fallback."
 keywords = ["font", "text"]
 categories = ["gui", "os"]
-edition.workspace = true
-rust-version.workspace = true
-license.workspace = true
-repository.workspace = true
+edition = "2021"
+rust-version = "1.83"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/linebender/parley"
 
 [package.metadata.docs.rs]
 all-features = true
 
-[lints]
-workspace = true
+#[lints]
+# keep default rustc/clippy settings from consuming workspace
 
 [features]
 default = ["system"]
@@ -40,16 +40,16 @@ system = [
 fontconfig-dlopen = ["yeslogic-fontconfig-sys?/dlopen"]
 
 [dependencies]
-bytemuck = { workspace = true }
-read-fonts = { workspace = true }
-linebender_resource_handle = { workspace = true }
+bytemuck = { version = "1.24.0", default-features = false }
+read-fonts = { version = "0.35.0", default-features = false }
+linebender_resource_handle = { version = "0.1.1", default-features = false }
 smallvec = "1.15.1"
 memmap2 = { version = "0.9.9", optional = true }
 unicode-script = { version = "0.5.7", optional = true }
 core_maths = { version = "0.1.1", optional = true }
-icu_properties = { workspace = true, features = ["compiled_data"], optional = true }
-icu_locale_core = { workspace = true, features = ["alloc"] }
-hashbrown = { workspace = true }
+icu_properties = { version = "2.1.1", features = ["compiled_data"], optional = true, default-features = false }
+icu_locale_core = { version = "2.1.1", features = ["alloc"], default-features = false }
+hashbrown = "0.16.1"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.58.0", features = [
@@ -72,10 +72,12 @@ objc2-foundation = { version = "0.3.2", optional = true, default-features = fals
 ] }
 objc2-core-foundation = { version = "0.3.2", optional = true, default-features = false, features = [
     "CFBase",
+    "CFURL",
 ] }
 objc2-core-text = { version = "0.3.2", optional = true, default-features = false, features = [
     "CTFont",
     "CTFontDescriptor",
+    "CTFontCollection",
 ] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
