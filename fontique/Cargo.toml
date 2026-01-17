@@ -41,7 +41,6 @@ fontconfig-dlopen = ["yeslogic-fontconfig-sys?/dlopen"]
 [dependencies]
 read-fonts = { workspace = true }
 linebender_resource_handle = { workspace = true }
-bytemuck = { version = "1.24.0", default-features = false }
 smallvec = "1.15.1"
 memmap2 = { version = "0.9.9", optional = true }
 hashbrown = { workspace = true }
@@ -51,9 +50,6 @@ core_maths = { version = "0.1.1", optional = true }
 icu_properties = { version = "2.1.1", features = [
     "compiled_data",
 ], optional = true, default-features = false }
-icu_locale_core = { version = "2.1.1", features = [
-    "alloc",
-], default-features = false }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.58.0", features = [
