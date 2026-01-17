@@ -41,6 +41,7 @@ fontconfig-dlopen = ["yeslogic-fontconfig-sys?/dlopen"]
 [dependencies]
 read-fonts = { workspace = true }
 linebender_resource_handle = { workspace = true }
+bytemuck = { version = "1.24.0", default-features = false }
 smallvec = "1.15.1"
 memmap2 = { version = "0.9.9", optional = true }
 hashbrown = { workspace = true }
