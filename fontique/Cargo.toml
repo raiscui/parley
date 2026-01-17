@@ -1,6 +1,6 @@
 [package]
 name = "fontique"
-version = "0.7.0" # Keep in sync with workspace dependency specification
+version = "0.7.0"                                   # Keep in sync with workspace dependency specification
 description = "Font enumeration and fallback."
 keywords = ["font", "text"]
 categories = ["gui", "os"]
@@ -46,11 +46,14 @@ smallvec = "1.15.1"
 memmap2 = { version = "0.9.9", optional = true }
 hashbrown = { workspace = true }
 text_primitives = { path = "../text_primitives", default-features = false }
-bytemuck = { version = "1.24.0", default-features = false }
 unicode-script = { version = "0.5.7", optional = true }
 core_maths = { version = "0.1.1", optional = true }
-icu_properties = { version = "2.1.1", features = ["compiled_data"], optional = true, default-features = false }
-icu_locale_core = { version = "2.1.1", features = ["alloc"], default-features = false }
+icu_properties = { version = "2.1.1", features = [
+    "compiled_data",
+], optional = true, default-features = false }
+icu_locale_core = { version = "2.1.1", features = [
+    "alloc",
+], default-features = false }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.58.0", features = [
@@ -61,7 +64,10 @@ windows-core = { version = "0.58.0", optional = true }
 
 [target.'cfg(target_vendor = "apple")'.dependencies]
 # FIX: Enable relax-sign-encoding to prevent the bug described in this issue: https://github.com/madsmtm/objc2/issues/566
-objc2 = { version = "0.6.3", optional = true, features = ["std", "relax-sign-encoding"] }
+objc2 = { version = "0.6.3", optional = true, features = [
+    "std",
+    "relax-sign-encoding",
+] }
 # NOTE: When updating objc2-foundation, objc2-core-foundation, or objc2-core-text make sure to use the version of objc2
 # that they reference to prevent crate duplication.
 objc2-foundation = { version = "0.3.2", optional = true, default-features = false, features = [
