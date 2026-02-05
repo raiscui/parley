@@ -1,19 +1,19 @@
 [package]
 name = "fontique"
-version = "0.7.0"                                   # Keep in sync with workspace dependency specification
+version = "0.7.0" # Keep in sync with workspace dependency specification
 description = "Font enumeration and fallback."
 keywords = ["font", "text"]
 categories = ["gui", "os"]
-edition = "2021"
-rust-version = "1.83"
-license = "Apache-2.0 OR MIT"
-repository = "https://github.com/linebender/parley"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
 
-#[lints]
-# keep default rustc/clippy settings from consuming workspace
+[lints]
+workspace = true
 
 [features]
 default = ["system"]
@@ -45,11 +45,6 @@ smallvec = "1.15.1"
 memmap2 = { version = "0.9.9", optional = true }
 hashbrown = { workspace = true }
 text_primitives = { path = "../text_primitives", default-features = false }
-unicode-script = { version = "0.5.7", optional = true }
-core_maths = { version = "0.1.1", optional = true }
-icu_properties = { version = "2.1.1", features = [
-    "compiled_data",
-], optional = true, default-features = false }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.62.2", features = ["Win32_Graphics_DirectWrite"], optional = true }
@@ -57,10 +52,7 @@ windows-core = { version = "0.62.2", optional = true }
 
 [target.'cfg(target_vendor = "apple")'.dependencies]
 # FIX: Enable relax-sign-encoding to prevent the bug described in this issue: https://github.com/madsmtm/objc2/issues/566
-objc2 = { version = "0.6.3", optional = true, features = [
-    "std",
-    "relax-sign-encoding",
-] }
+objc2 = { version = "0.6.3", optional = true, features = ["std", "relax-sign-encoding"] }
 # NOTE: When updating objc2-foundation, objc2-core-foundation, or objc2-core-text make sure to use the version of objc2
 # that they reference to prevent crate duplication.
 objc2-foundation = { version = "0.3.2", optional = true, default-features = false, features = [
